@@ -3,7 +3,7 @@
     function PixelModel(config) {
 
         var model = new Model(config);
-        model.set({ previousColor: 'ffffff' });
+        model.set({ color: '#ffffff', previousColor: '#ffffff' });
 
 
         model.isInLineWith = function(other) {

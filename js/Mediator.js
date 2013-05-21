@@ -13,8 +13,8 @@
     }
 
     Mediator.prototype.singleStroke = function(pixelModel, pixelView, color) {
-        pixelModel.set({ previousColor: color });
-        pixelView.el.style.backgroundColor = '#' + color;
+        pixelModel.set({ color: color });
+        pixelView.el.style.backgroundColor = color;
     };
 
     Mediator.prototype.multiStroke = function(pixelModel, pixelView, color) {
@@ -22,7 +22,7 @@
         if (!this.selection.length) {
 
             this.selection.push(pixelView);
-            pixelView.el.style.backgroundColor = '#' + color;
+            pixelView.el.style.backgroundColor = color;
             return;
 
         }
@@ -33,7 +33,8 @@
 
             this.selection = this.getLinearSelection(alreadySelectedPixel, pixelModel);
             this.selection.forEach(function(pixelView) {
-                pixelView.el.style.backgroundColor = '#' + color;
+                pixelView.model.set({ color: color });
+                pixelView.el.style.backgroundColor = color;
             });
             this.clearSelection();
 
@@ -45,7 +46,20 @@
 
     };
 
-    Mediator.prototype.fillStroke = function(pixelModel, pixelView, color) {
+    Mediator.prototype.fillStroke = function(pixelView, color) {
+
+        this.selectAllNearbyByColour(pixelView, color);
+
+        this.selection.forEach(function(pv) {
+            pv.model.set({ color: color });
+            pv.el.style.backgroundColor = color;
+        });
+
+        this.clearSelection();
+
+    };
+
+    Mediator.prototype.selectAllNearbyByColour = function(pixelView, color) {
 
         var collection = this.pixelViewCollection;
         var self = this;
@@ -85,7 +99,7 @@
         }
 
         function colorFilter(pv) {
-            return pv.model.color !== color;
+            return pv.model.get('color') === pixelView.model.get('color');
         }
 
         function selectedFilter(pv) {
@@ -96,17 +110,12 @@
         var sameColor = neighbours.filter(colorFilter);
         var different = sameColor.filter(selectedFilter);
 
-        console.log('dif', different);
         this.selection = this.selection.concat(different);
 
-        this.selection.forEach(function(pv) {
-            var n = pv.model;
-            console.log(n.get('row'), n.get('col'));
-            //pv.el.style.backgroundColor = '#FFFF00';
+        // Recurse over nearby similarly colored pixels and add them to the selection.
+        different.forEach(function(pv) {
+            self.selectAllNearbyByColour(pv, color);
         });
-/*
- */
-
 
     };
 
@@ -145,9 +154,6 @@
 
     };
 
-
-
-
     Mediator.prototype.stroke = function(pixelModel) {
 
         var color = this.paletteModel.get('color'),
@@ -168,25 +174,14 @@
                 this.multiStroke(pixelModel, view, color);
                 break;
             case 'fill':
-                this.fillStroke(pixelModel, view, color);
+                this.fillStroke(view, color);
                 break;
         }
     };
 
-
-
-
-
-
-
-
-
-
-
-
-
     Mediator.prototype.clearCanvas = function() {
         this.pixelViewCollection.forEach(function(pixelView) {
+            pixelView.model.set({ color: '#ffffff'});
             pixelView.el.style.backgroundColor = '#ffffff';
         });
     };
@@ -198,7 +193,7 @@
     Mediator.prototype.undoSelection = function() {
         if (this.paletteModel.get('strokeType') !== 'multi') { return; }
         this.selection.forEach(function(pixelView) {
-            pixelView.el.style.backgroundColor = '#' + pixelView.model.get('previousColor');
+            pixelView.el.style.backgroundColor = pixelView.model.get('previousColor');
         });
         this.clearSelection();
     };
