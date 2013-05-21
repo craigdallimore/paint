@@ -1,0 +1,5 @@
+*.sh
+*.swp
+*.swo
+/node_modules/
+
