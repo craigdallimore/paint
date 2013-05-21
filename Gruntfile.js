@@ -8,6 +8,7 @@ module.exports = function(grunt) {
         concat: {
             js: {
                 src: [
+                    '<%= dirs.js %>shim.js',
                     '<%= dirs.js %>App.js',
                     '<%= dirs.js %>Events.js',
                     '<%= dirs.js %>Mediator.js',
@@ -24,6 +25,12 @@ module.exports = function(grunt) {
                 dest: '<%= dirs.dist %>app.concat.js'
             }
         },
+        uglify: {
+            files: {
+                src: ['<%= concat.js.dest %>'],
+                dest: '<%= dirs.dist %>app.min.js'
+            }
+        },
         watch: {
             scripts: {
                 files: '<%= concat.js.src %>',
@@ -35,8 +42,9 @@ module.exports = function(grunt) {
 
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
 
-    grunt.registerTask('js', ['concat:js']);
+    grunt.registerTask('js', ['concat:js', 'uglify']);
 
 };
 

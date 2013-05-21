@@ -6,11 +6,11 @@
 
             var htmlString =
             '<button id="btn-clear">Clear</button>' +
-            '<button id="btn-single">Single</button>' +
+            '<button id="btn-single" class="selected">Single</button>' +
             '<button id="btn-multi">Multi</button>' +
             '<button id="btn-fill">Fill</button>' +
             '<select id="select-color" name="select-color">' +
-                '<option value="#000000">Black</option>' +
+                '<option selected="selected" value="#000000">Black</option>' +
                 '<option value="#0000AA">Blue</option>' +
                 '<option value="#00AA00">Green</option>' +
                 '<option value="#00AAAA">Cyan</option>' +

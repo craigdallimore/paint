@@ -9,7 +9,11 @@
         };
 
         view.addEventListeners = function() {
-            view.el.addEventListener('click', view.onClick);
+            if( view.el.addEventListener ) {
+                view.el.addEventListener('click', view.onClick);
+            } else {
+                view.el.attachEvent('onclick', view.onClick);
+            }
         };
 
         return view;

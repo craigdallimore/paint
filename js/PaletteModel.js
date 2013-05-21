@@ -3,7 +3,7 @@
     function PaletteModel() {
 
         var model = new Model({
-            color: 'ffffff',
+            color: '#000000',
             strokeType: 'single'
         });
 

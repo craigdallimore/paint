@@ -89,7 +89,6 @@
 
             for(row = topRow; row<=bottomRow; row++) {
                 for(col = leftCol; col<=rightCol; col++) {
-                    if (col === centreCol && row === centreRow) { continue; }
                     surroundingPixels.push(self.getPixelByCoords(row, col));
                 }
             }
@@ -184,6 +183,7 @@
             pixelView.model.set({ color: '#ffffff'});
             pixelView.el.style.backgroundColor = '#ffffff';
         });
+        Events.fire('pick:stroke', 'single');
     };
 
     Mediator.prototype.clearSelection = function() {
@@ -193,7 +193,7 @@
     Mediator.prototype.undoSelection = function() {
         if (this.paletteModel.get('strokeType') !== 'multi') { return; }
         this.selection.forEach(function(pixelView) {
-            pixelView.el.style.backgroundColor = pixelView.model.get('previousColor');
+            pixelView.el.style.backgroundColor = pixelView.model.get('color');
         });
         this.clearSelection();
     };

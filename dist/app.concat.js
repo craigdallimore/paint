@@ -1,3 +1,33 @@
+// Add ECMA262-5 Array methods if not supported natively
+// http://stackoverflow.com/questions/2790001/fixing-javascript-array-functions-in-internet-explorer-indexof-foreach-etc
+if (!('indexOf' in Array.prototype)) {
+    Array.prototype.indexOf= function(find, i /*opt*/) {
+        if (i===undefined) i= 0;
+        if (i<0) i+= this.length;
+        if (i<0) i= 0;
+        for (var n= this.length; i<n; i++)
+            if (i in this && this[i]===find)
+                return i;
+        return -1;
+    };
+}
+if (!('forEach' in Array.prototype)) {
+    Array.prototype.forEach= function(action, that /*opt*/) {
+        for (var i= 0, n= this.length; i<n; i++)
+            if (i in this)
+                action.call(that, this[i], i, this);
+    };
+}
+if (!('filter' in Array.prototype)) {
+    Array.prototype.filter= function(filter, that /*opt*/) {
+        var other= [], v;
+        for (var i=0, n= this.length; i<n; i++)
+            if (i in this && filter.call(that, v= this[i], i, this))
+                other.push(v);
+        return other;
+    };
+}
+
 var App = {};
 
 (function(app){
@@ -135,7 +165,6 @@ var App = {};
 
             for(row = topRow; row<=bottomRow; row++) {
                 for(col = leftCol; col<=rightCol; col++) {
-                    if (col === centreCol && row === centreRow) { continue; }
                     surroundingPixels.push(self.getPixelByCoords(row, col));
                 }
             }
@@ -230,6 +259,7 @@ var App = {};
             pixelView.model.set({ color: '#ffffff'});
             pixelView.el.style.backgroundColor = '#ffffff';
         });
+        Events.fire('pick:stroke', 'single');
     };
 
     Mediator.prototype.clearSelection = function() {
@@ -239,7 +269,7 @@ var App = {};
     Mediator.prototype.undoSelection = function() {
         if (this.paletteModel.get('strokeType') !== 'multi') { return; }
         this.selection.forEach(function(pixelView) {
-            pixelView.el.style.backgroundColor = pixelView.model.get('previousColor');
+            pixelView.el.style.backgroundColor = pixelView.model.get('color');
         });
         this.clearSelection();
     };
@@ -280,7 +310,7 @@ var App = {};
     function PaletteModel() {
 
         var model = new Model({
-            color: 'ffffff',
+            color: '#000000',
             strokeType: 'single'
         });
 
@@ -309,34 +339,59 @@ var App = {};
         var view = new app.View(config);
 
         view.addEventListeners = function() {
-            $('select-color').addEventListener('change', this.selectColor, this);
-            $('btn-single').addEventListener('click', this.pickSingle, this);
-            $('btn-multi').addEventListener('click', this.pickMulti, this);
-            $('btn-fill').addEventListener('click', this.pickFill, this);
-            $('btn-clear').addEventListener('click', this.clearCanvas, this);
+            if(document.addEventListener) {
+                $('select-color').addEventListener('change', this.selectColor, this);
+                $('btn-single').addEventListener('click', this.pickSingle, this);
+                $('btn-multi').addEventListener('click', this.pickMulti, this);
+                $('btn-fill').addEventListener('click', this.pickFill, this);
+                $('btn-clear').addEventListener('click', this.clearCanvas, this);
+            } else {
+                $('select-color').attachEvent('onchange', this.selectColor, this);
+                $('btn-single').attachEvent('onclick', this.pickSingle);
+                $('btn-multi').attachEvent('onclick', this.pickMulti);
+                $('btn-fill').attachEvent('onclick', this.pickFill);
+                $('btn-clear').attachEvent('onclick', this.clearCanvas);
+            }
         };
 
         view.selectColor = function(e) {
-            Events.fire('select:color', e.target.value);
+            var val = e.target ? e.target.value : e.srcElement.value;
+            Events.fire('select:color', val);
         };
 
         view.pickSingle = function(e) {
-            e.preventDefault();
+            if (e.preventDefault) {
+                e.preventDefault();
+            } else {
+                e.returnValue = false;
+            }
             Events.fire('pick:stroke', 'single');
         };
 
         view.pickMulti = function(e) {
-            e.preventDefault();
+            if (e.preventDefault) {
+                e.preventDefault();
+            } else {
+                e.returnValue = false;
+            }
             Events.fire('pick:stroke', 'multi');
         };
 
         view.pickFill = function(e) {
-            e.preventDefault();
+            if (e.preventDefault) {
+                e.preventDefault();
+            } else {
+                e.returnValue = false;
+            }
             Events.fire('pick:stroke', 'fill');
         };
 
         view.clearCanvas = function(e) {
-            e.preventDefault();
+            if (e.preventDefault) {
+                e.preventDefault();
+            } else {
+                e.returnValue = false;
+            }
             Events.fire('clear:canvas');
         };
 
@@ -347,8 +402,6 @@ var App = {};
         };
 
         Events.on('pick:stroke', view.selectButton);
-
-
 
         return view;
 
@@ -367,7 +420,7 @@ var App = {};
     function PixelModel(config) {
 
         var model = new Model(config);
-        model.set({ color: '#ffffff', previousColor: '#ffffff' });
+        model.set({ color: '#ffffff' });
 
 
         model.isInLineWith = function(other) {
@@ -394,7 +447,11 @@ var App = {};
         };
 
         view.addEventListeners = function() {
-            view.el.addEventListener('click', view.onClick);
+            if( view.el.addEventListener ) {
+                view.el.addEventListener('click', view.onClick);
+            } else {
+                view.el.attachEvent('onclick', view.onClick);
+            }
         };
 
         return view;
@@ -492,11 +549,11 @@ var App = {};
 
             var htmlString =
             '<button id="btn-clear">Clear</button>' +
-            '<button id="btn-single">Single</button>' +
+            '<button id="btn-single" class="selected">Single</button>' +
             '<button id="btn-multi">Multi</button>' +
             '<button id="btn-fill">Fill</button>' +
             '<select id="select-color" name="select-color">' +
-                '<option value="#000000">Black</option>' +
+                '<option selected="selected" value="#000000">Black</option>' +
                 '<option value="#0000AA">Blue</option>' +
                 '<option value="#00AA00">Green</option>' +
                 '<option value="#00AAAA">Cyan</option>' +
@@ -580,9 +637,15 @@ var App = {};
         // Set width of canvas
         ul.style.width = (cols * (ul.children[0].clientWidth + 1)) + 1 + 'px';
 
-        ul.addEventListener('mouseleave', function() {
-            App.Events.fire('mouseleave:canvas');
-        });
+        if (ul.addEventListener) {
+            ul.addEventListener('mouseleave', function() {
+                App.Events.fire('mouseleave:canvas');
+            });
+        } else {
+            ul.attachEvent('onmouseleave', function() {
+                App.Events.fire('mouseleave:canvas');
+            });
+        }
 
     };
 

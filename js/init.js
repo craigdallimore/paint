@@ -53,9 +53,15 @@
         // Set width of canvas
         ul.style.width = (cols * (ul.children[0].clientWidth + 1)) + 1 + 'px';
 
-        ul.addEventListener('mouseleave', function() {
-            App.Events.fire('mouseleave:canvas');
-        });
+        if (ul.addEventListener) {
+            ul.addEventListener('mouseleave', function() {
+                App.Events.fire('mouseleave:canvas');
+            });
+        } else {
+            ul.attachEvent('onmouseleave', function() {
+                App.Events.fire('mouseleave:canvas');
+            });
+        }
 
     };
 
