@@ -1,0 +1,4 @@
+paint
+=====
+
+JavaScript technical test
